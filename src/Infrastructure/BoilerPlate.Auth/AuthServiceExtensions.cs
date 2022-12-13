@@ -12,14 +12,17 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using BoilerPlate.Api.Middleware;
 
 namespace BoilerPlate.Auth
 {
+
     public static class AuthServiceExtensions
     {
         public static void AddAuthServices(this IServiceCollection services, IConfiguration configuration)
         {
             services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
+            services.Configure<JwtPermissions>(configuration.GetSection("JwtClaim"));
             services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -52,10 +55,8 @@ namespace BoilerPlate.Auth
                         OnTokenValidated = async c =>
                         {
                             var newClaims = c.Principal.Claims.ToList();
-                            List<object> Permission = new List<object>{ new { resource = "Category", scope = new string[] { "create,view" } }, new { resource = "Events", scope = new string[] { "view" } } };
-
-                            newClaims.Add(new Claim("permission" , JsonConvert.SerializeObject(Permission)));
-
+                            var Permissions = configuration.GetSection("JwtClaim:Permission").Get<List<Permission>>();
+                            newClaims.Add(new Claim("permission", JsonConvert.SerializeObject(Permissions)));
                             c.Principal.AddIdentity(new ClaimsIdentity(newClaims));
                         },
                         OnAuthenticationFailed = c =>
