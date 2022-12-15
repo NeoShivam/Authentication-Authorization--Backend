@@ -13,6 +13,7 @@ using System.Threading.Tasks;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using BoilerPlate.Auth.Models;
+using BoilerPlate.Application.Responses;
 
 namespace BoilerPlate.Auth
 {
@@ -67,7 +68,15 @@ namespace BoilerPlate.Auth
                             c.Response.StatusCode = 498;
                             c.Response.ContentType = "text/plain";
                             if (c.Exception.Message.StartsWith("IDX10223"))
-                                return c.Response.WriteAsync("The Token is Expired");
+                            {
+                                var response = new Response<string>();
+                                response.Succeeded = false;
+                                response.Errors = new List<string>();
+                                response.Errors.Add("Token not valid");
+                                response.Message = "Token not valid";
+                                return c.Response.WriteAsync(JsonConvert.SerializeObject(response));
+                            }
+                                
                             return c.Response.WriteAsync(c.Exception.Message);
                         },
                         OnChallenge = context =>
