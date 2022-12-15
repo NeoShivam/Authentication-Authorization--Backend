@@ -61,6 +61,16 @@ services.AddCors(options =>
             builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
         });
 });
+services.AddCors(Options => {
+    Options.AddPolicy("ReactApplication", builder =>
+    {
+        builder.WithOrigins("http://localhost:3000")
+    .AllowAnyHeader()
+    .WithMethods("GET", "POST", "PUT", "DELETE")
+    .WithExposedHeaders("*");
+    }
+);
+});
 services.AddApplicationServices();
 
 services.AddInfrastructureServices(Configuration);
@@ -126,7 +136,7 @@ options =>
 
 app.UseCustomExceptionHandler();
 
-app.UseCors(MyAllowSpecificOrigins);
+app.UseCors("ReactApplication");
 
 app.UseAuthorization();
 if (app.Environment.EnvironmentName != "Test")

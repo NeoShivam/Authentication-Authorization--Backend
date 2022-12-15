@@ -22,10 +22,10 @@ namespace BoilerPlate.Api.Middleware
                     if (claim != null && claim.Value != "")
                     {
                         List<Permission> permissions = JsonConvert.DeserializeObject<List<Permission>>(claim.Value);
-                        var resource = permissions.Where(a => a.resource.ToLower() == controller).FirstOrDefault();
+                        var resource = permissions.Where(a => a.resource == controller).FirstOrDefault();
                     if (resource != null)
                     {
-                        List<string> scopes = resource.scope.FirstOrDefault().Split(",").ToList();
+                        List<string> scopes = resource.scopes.ToList();
                         string requiredPermission = "";
                         switch (context.Request.Method)
                         {
