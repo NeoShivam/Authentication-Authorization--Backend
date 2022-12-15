@@ -53,18 +53,24 @@ string MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 var services = builder.Services;
 
 string Urls = Configuration.GetSection("URLWhiteListings").GetSection("URLs").Value;
-services.AddCors(c =>
+services.AddCors(options =>
 {
-    c.AddPolicy("AllowOrigin", options => options.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+    options.AddPolicy(name: MyAllowSpecificOrigins,
+        builder =>
+        {
+            builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+        });
 });
-//services.AddCors(options =>
-//{
-//    options.AddPolicy(name: MyAllowSpecificOrigins,
-//        builder =>
-//        {
-//            builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
-//        });
-//});
+services.AddCors(Options => {
+    Options.AddPolicy("ReactApplication", builder =>
+    {
+        builder.WithOrigins("http://localhost:3000")
+    .AllowAnyHeader()
+    .WithMethods("GET", "POST", "PUT", "DELETE")
+    .WithExposedHeaders("*");
+    }
+);
+});
 services.AddApplicationServices();
 
 services.AddInfrastructureServices(Configuration);
@@ -121,7 +127,7 @@ IApiVersionDescriptionProvider provider = app.Services.GetRequiredService<IApiVe
 app.UseSwaggerUI(
 options =>
 {
-                // build a swagger endpoint for each discovered API version  
+    // build a swagger endpoint for each discovered API version  
     foreach (var description in provider.ApiVersionDescriptions)
     {
         options.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json", description.GroupName.ToUpperInvariant());
@@ -130,7 +136,7 @@ options =>
 
 app.UseCustomExceptionHandler();
 
-app.UseCors("AllowOrigin");
+app.UseCors("ReactApplication");
 
 app.UseAuthorization();
 if (app.Environment.EnvironmentName != "Test")
