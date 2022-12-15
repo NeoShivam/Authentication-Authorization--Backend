@@ -12,7 +12,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using BoilerPlate.Api.Middleware;
+using BoilerPlate.Auth.Models;
 
 namespace BoilerPlate.Auth
 {
