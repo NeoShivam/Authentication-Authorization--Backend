@@ -53,14 +53,18 @@ string MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 var services = builder.Services;
 
 string Urls = Configuration.GetSection("URLWhiteListings").GetSection("URLs").Value;
-services.AddCors(options =>
+services.AddCors(c =>
 {
-    options.AddPolicy(name: MyAllowSpecificOrigins,
-        builder =>
-        {
-            builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
-        });
+    c.AddPolicy("AllowOrigin", options => options.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
 });
+//services.AddCors(options =>
+//{
+//    options.AddPolicy(name: MyAllowSpecificOrigins,
+//        builder =>
+//        {
+//            builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+//        });
+//});
 services.AddApplicationServices();
 
 services.AddInfrastructureServices(Configuration);
@@ -126,7 +130,7 @@ options =>
 
 app.UseCustomExceptionHandler();
 
-app.UseCors(MyAllowSpecificOrigins);
+app.UseCors("AllowOrigin");
 
 app.UseAuthorization();
 if (app.Environment.EnvironmentName != "Test")
