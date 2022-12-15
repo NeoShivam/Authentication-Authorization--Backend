@@ -1,4 +1,5 @@
-﻿using Newtonsoft.Json;
+﻿using BoilerPlate.Auth.Models;
+using Newtonsoft.Json;
 
 namespace BoilerPlate.Api.Middleware
 {
@@ -23,7 +24,7 @@ namespace BoilerPlate.Api.Middleware
                     {
                         List<Permission> permissions = JsonConvert.DeserializeObject<List<Permission>>(claim.Value);
                         var resource = permissions.Where(a => a.resource == controller).FirstOrDefault();
-                    if (resource != null)
+                    if (resource != null && resource.scopes != null)
                     {
                         List<string> scopes = resource.scopes.ToList();
                         string requiredPermission = "";

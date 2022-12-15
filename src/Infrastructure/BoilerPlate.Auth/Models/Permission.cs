@@ -1,4 +1,4 @@
-﻿namespace BoilerPlate.Api.Middleware
+﻿namespace BoilerPlate.Auth.Models
 {
     public class Permission
     {
