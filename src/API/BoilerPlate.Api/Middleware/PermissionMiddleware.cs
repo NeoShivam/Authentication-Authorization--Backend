@@ -5,57 +5,69 @@ namespace BoilerPlate.Api.Middleware
     public class PermissionMiddleware
     {
         private readonly RequestDelegate _next;
+        private readonly ILogger<PermissionMiddleware> _logger;
 
-        public PermissionMiddleware(RequestDelegate next)
+        public PermissionMiddleware(RequestDelegate next, ILogger<PermissionMiddleware> logger)
         {
             _next = next;
+            _logger = logger;
         }
         public async Task InvokeAsync(HttpContext context)
         {
-            string controller = context.Request.RouteValues["controller"].ToString().ToLower();
-            
-            var claim = context.User.Claims.Where(x => x.Type == "permission").FirstOrDefault();
-            if (claim != null && claim.Value != "")
-            {
-                List<Permission> permissions = JsonConvert.DeserializeObject<List<Permission>>(claim.Value);
-                var resource = permissions.Where(a => a.resource.ToLower() == controller).FirstOrDefault();
-                if (resource != null)
+                if (!context.Response.HasStarted)
                 {
-                    List<string> scopes = resource.scope.FirstOrDefault().Split(",").ToList();
-                    string requiredPermission = "";
-                    switch (context.Request.Method)
+                    string controller = context.Request.RouteValues["controller"].ToString().ToLower();
+
+                    var claim = context.User.Claims.Where(x => x.Type == "permission").FirstOrDefault();
+                    if (claim != null && claim.Value != "")
                     {
-                        case "GET":
-                            requiredPermission = "view";
-                            break;
-                        case "POST":
-                            requiredPermission = "create";
-                            break;
-                        case "PUT":
-                            requiredPermission = "edit";
-                            break;
-                        case "DELETE":
-                            requiredPermission = "delete";
-                            break;
-                        default:
-                            break;
+                        List<Permission> permissions = JsonConvert.DeserializeObject<List<Permission>>(claim.Value);
+                        var resource = permissions.Where(a => a.resource.ToLower() == controller).FirstOrDefault();
+                    if (resource != null)
+                    {
+                        List<string> scopes = resource.scope.FirstOrDefault().Split(",").ToList();
+                        string requiredPermission = "";
+                        switch (context.Request.Method)
+                        {
+                            case "GET":
+                                requiredPermission = "view";
+                                break;
+                            case "POST":
+                                requiredPermission = "create";
+                                break;
+                            case "PUT":
+                                requiredPermission = "edit";
+                                break;
+                            case "DELETE":
+                                requiredPermission = "delete";
+                                break;
+                            default:
+                                break;
+                        }
+                        if (scopes.Contains(requiredPermission))
+                            await _next(context);
+                        else
+                            await BlockRequest(context, 403);
                     }
-                    if (scopes.Contains(requiredPermission))
-                        await _next(context);
                     else
-                        await Unauthorized(context);
+                        await BlockRequest(context, 403);
+                    }
+                    else
+                        await BlockRequest(context, 401);
+                }
+                else
+                    _logger.LogError(context.Response.StatusCode+" :: Unvalidated Token");
+
+                async Task BlockRequest(HttpContext context, int statusCode)
+                {
+                    _logger.LogError(statusCode + "Request Blocked");
+                    context.Response.StatusCode = statusCode;
+                    context.Response.ContentType = "text/plain";
+                    await context.Response.WriteAsync(statusCode + " Not Allowed");
                 }
             }
-            else
-                await Unauthorized(context);
-        }
-
-        async Task Unauthorized(HttpContext context) {
-        context.Response.StatusCode = 403;
-        context.Response.ContentType = "application/json";
-        var result = JsonConvert.SerializeObject("403 Not authorized");
-        await context.Response.WriteAsync(result);
+        
         }
 
     }
-}
+
