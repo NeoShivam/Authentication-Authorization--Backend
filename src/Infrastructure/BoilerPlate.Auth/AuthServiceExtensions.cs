@@ -42,6 +42,8 @@ namespace BoilerPlate.Auth
                         ClockSkew = TimeSpan.Zero,
                         ValidIssuer = configuration["JwtSettings:Issuer"],
                         ValidAudience = configuration["JwtSettings:Audience"]
+
+                        //For testing (if Issuer is not available)
                         //SignatureValidator = delegate (string token, TokenValidationParameters parameters)
                         //{
                         //    var jwt = new JwtSecurityToken(token);
@@ -62,9 +64,11 @@ namespace BoilerPlate.Auth
                         OnAuthenticationFailed = c =>
                         {
                             c.NoResult();
-                            c.Response.StatusCode = 500;
+                            c.Response.StatusCode = 498;
                             c.Response.ContentType = "text/plain";
-                            return c.Response.WriteAsync(c.Exception.ToString());
+                            if (c.Exception.Message.StartsWith("IDX10223"))
+                                return c.Response.WriteAsync("The Token is Expired");
+                            return c.Response.WriteAsync(c.Exception.Message);
                         },
                         OnChallenge = context =>
                         {
